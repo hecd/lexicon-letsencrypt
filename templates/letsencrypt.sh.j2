@@ -1,0 +1,7 @@
+#!/bin/bash
+
+export PROVIDER={{ lle_provider }}
+export LEXICON_{{ lle_provider | upper }}_USERNAME={{ lle_provider_username}}
+export LEXICON_{{ lle_provider | upper }}_TOKEN={{ lle_provider_token}}
+
+{{ lle_dehydrated_repo }}/dehydrated --cron

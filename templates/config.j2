@@ -1,0 +1,6 @@
+CHALLENGETYPE=dns-01
+CONTACT_EMAIL={{ lle_contact_email }}
+HOOK={{ lle_dehydrated_hook_path }}
+{% if lle_use_staging_ca %}
+CA="https://acme-staging.api.letsencrypt.org/directory"
+{% endif %}

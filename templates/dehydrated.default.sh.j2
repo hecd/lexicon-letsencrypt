@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+# Based on https://github.com/AnalogJ/lexicon/blob/master/examples/dehydrated.default.sh
+
+set -e
+set -u
+set -o pipefail
+
+LEXICON={{ lle_lexicon_path }}
+
+function deploy_challenge {
+  local DOMAIN="${1}" TOKEN_FILENAME="${2}" TOKEN_VALUE="${3}"
+  $LEXICON $PROVIDER create ${DOMAIN} TXT --name="_acme-challenge.${DOMAIN}." --content="${TOKEN_VALUE}" --auth-username={{ lle_provider_username}} --auth-token={{ lle_provider_token }}
+  sleep 30
+}
+
+function clean_challenge {
+  local DOMAIN="${1}" TOKEN_FILENAME="${2}" TOKEN_VALUE="${3}"
+  $LEXICON $PROVIDER delete ${DOMAIN} TXT --name="_acme-challenge.${DOMAIN}." --content="${TOKEN_VALUE}" --auth-username={{ lle_provider_username}} --auth-token={{ lle_provider_token }}
+}
+
+function invalid_challenge() {
+  local DOMAIN="${1}" RESPONSE="${2}"
+{% for command in lle_invalid_challenge_commands %}
+  {{ command }}
+{% endfor %}
+
+}
+
+function deploy_cert {
+  local DOMAIN="${1}" KEYFILE="${2}" CERTFILE="${3}" FULLCHAINFILE="${4}" CHAINFILE="${5}"
+  chmod g+rx {{lle_dehydrated_repo }}/certs/$DOMAIN
+
+{% for entry in lle_domains%}
+  [ -d {{lle_dehydrated_repo }}/certs/{{entry.name}} ] && chown -R {{lle_certificate_user }}:{{entry.group}} {{lle_dehydrated_repo }}/certs/{{entry.name}} && chmod g+r {{lle_dehydrated_repo}}/certs/$DOMAIN/*
+{% endfor %}
+
+{% for command in lle_deploy_cert_commands %}
+  {{command}}
+{% endfor %}
+}
+
+function unchanged_cert {
+  local DOMAIN="${1}" KEYFILE="${2}" CERTFILE="${3}" FULLCHAINFILE="${4}" CHAINFILE="${5}"
+{% for command in lle_unchanged_cert_commands %}
+  {{command}}
+{% endfor %}
+
+}
+
+exit_hook() {
+  :
+}
+
+startup_hook() {
+  :
+}
+
+HANDLER=$1; shift;
+if [ -n "$(type -t $HANDLER)" ] && [ "$(type -t $HANDLER)" = function ]; then
+  $HANDLER "$@"
+fi
