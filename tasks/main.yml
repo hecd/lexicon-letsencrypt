@@ -1,38 +1,31 @@
 ---
 - name: Install required packages
-  apt: state=installed pkg={{ item }}
+  apt:
+    pkg: "{{ item }}"
   with_items:
     - git
     - openssl
     - curl
     - python3-pip
+  become: true
 
 - name: Create certificate farmer user account
   user:
     name: "{{lle_certificate_user}}"
     password: "{{ lle_certificate_user_password }}"
     system: yes
-    shell: /bin/nologin
+    shell: /bin/false
+    home: "/var/lib/{{ lle_certificate_user }}"
+  become: true
 
 - name: Clone dehydrated repository from github
   git:
+    umask: "027"
     repo: https://github.com/lukas2511/dehydrated.git
     dest:  "{{ lle_dehydrated_repo }}"
     force: yes
-
-- name: Transfer ownership of dehydrated repository
-  file:
-    path: "{{ lle_dehydrated_repo }}"
-    state: directory
-    owner: "{{ lle_certificate_user }}"
-    group: "{{ lle_certificate_user }}"
-    mode: 0755
-
-- name: Make dehydrated script executable
-  file:
-      path: "{{lle_dehydrated_repo}}/dehydrated"
-      state: touch
-      mode: "u+x"
+  become: true
+  become_user: "{{ lle_certificate_user }}"
 
 - name: Create file containing domains
   template:
@@ -41,24 +34,16 @@
     mode: 0600
     owner: "{{ lle_certificate_user }}"
     group: "{{ lle_certificate_user }}"
-
-- name: "Install pip packages"
-  # Install lexicon package for user only instead of system-wide.
-  # Requires Ansible pipelining or world-readable module files.
+    force: true
+  become: true
   become_user: "{{ lle_certificate_user }}"
+
+- name: Install dns-lexicon pip package globally
   pip:
     name: dns-lexicon
     state: present
     executable: /usr/bin/pip3
-
-- name: Transfer ownership of lexicon
-  file:
-    path: "/usr/local/bin/lexicon"
-    recurse: yes
-    state: directory
-    owner: "{{ lle_certificate_user }}"
-    group: "{{ lle_certificate_user }}"
-    mode: 0700
+  become: true
 
 - name: Copy hook file template
   template:
@@ -67,6 +52,8 @@
     mode: 0700
     owner: "{{ lle_certificate_user }}"
     group: "{{ lle_certificate_user }}"
+  become: true
+  become_user: "{{ lle_certificate_user }}"
 
 - name: Copy dehydrated config file
   template:
@@ -75,9 +62,12 @@
     mode: 0600
     owner: "{{ lle_certificate_user }}"
     group: "{{ lle_certificate_user }}"
+  become: true
+  become_user: "{{ lle_certificate_user }}"
 
 - name: Register and accept Lets Encrypt CA terms and conditions
   command: "{{ lle_dehydrated_repo}}/dehydrated --register --accept-terms"
+  become: true
   become_user: "{{ lle_certificate_user }}"
 
 - name: Create certs directory
@@ -85,16 +75,16 @@
     path: "{{ lle_dehydrated_repo}}/certs"
     state: directory
     mode: 0750
-    owner: "{{ lle_certificate_user }}"
-    group: "{{ lle_cert_readonly_group }}"
+  become: true
+  become_user: "{{ lle_certificate_user }}"
 
 - name: Copy certificate generation script (cron script)
   template:
     src: templates/letsencrypt.sh.j2
     dest: "{{ lle_scheduled_script }}"
     mode: 0700
-    owner: "{{ lle_certificate_user }}"
-    group: "{{ lle_certificate_user }}"
+  become: true
+  become_user: "{{ lle_certificate_user }}"
 
 - name: Schedule certificate generation
   cron:
@@ -105,9 +95,25 @@
   with_items:
       - weekly
       - reboot
+  become: true
 
 - name: Send cron mails to root
   cronvar:
       name: MAILTO
       value: root
       user: "{{ lle_certificate_user }}"
+  become: true
+
+- name: Create sudoers configuration for reloading services using unprivileged user
+  template:
+    src: templates/etc/sudoers.d/reload-service-commands.j2
+    dest: "/etc/sudoers.d/{{ lle_certificate_user }}-reload-services"
+    owner: root
+    group: root
+    mode: 0700
+  become: true
+
+- name: Run initial certificate request generation
+  command: "{{ lle_scheduled_script}}"
+  become: true
+  become_user: "{{ lle_certificate_user }}"

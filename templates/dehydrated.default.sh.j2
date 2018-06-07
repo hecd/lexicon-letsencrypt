@@ -32,7 +32,7 @@ function deploy_cert {
   chmod g+rx {{lle_dehydrated_repo }}/certs/$DOMAIN
 
 {% for entry in lle_domains%}
-  [ -d {{lle_dehydrated_repo }}/certs/{{entry.name}} ] && chown -R {{lle_certificate_user }}:{{entry.group}} {{lle_dehydrated_repo }}/certs/{{entry.name}} && chmod g+r {{lle_dehydrated_repo}}/certs/$DOMAIN/*
+  [ -d {{lle_dehydrated_repo }}/certs/{{entry.name}} ] && sudo chown -R {{lle_certificate_user }}:{{entry.group}} {{lle_dehydrated_repo }}/certs/{{entry.name}} && chmod g+r {{lle_dehydrated_repo}}/certs/$DOMAIN/*
 {% endfor %}
 
 {% for command in lle_deploy_cert_commands %}

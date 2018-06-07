@@ -5,21 +5,20 @@ lle_provider_token: "API_KEY_GOES_HERE"
 lle_contact_email: "CONTACT_MAIL_GOES_HERE"
 lle_script_response_receiver: root
 lle_certificate_user: "certfarmer"
-# Password "certfarmer" generated using `mkpasswd --sha512`
+# Default password "certfarmer" generated using `mkpasswd --sha512`
 lle_certificate_user_password: "$6$QIzh0mAZ3XK$PrKqDG8RGOwQmPrmW2m0GyBWQlkDnxoX0.HY1EGazVWgaQ6XdaX9QkROcMN..T1reW8EZX/dtmv7EO1FsLtmg0"
+lle_certificate_user_home: "/var/lib/{{ lle_certificate_user }}"
 lle_use_staging_ca: false
-lle_dehydrated_repo: /usr/local/dehydrated
-lle_scheduled_script: /usr/local/sbin/letsencrypt.sh
-lle_lexicon_path: "/home/{{ lle_certificate_user }}/.local/bin/lexicon"
+lle_dehydrated_repo: "{{ lle_certificate_user_home }}/dehydrated"
+lle_scheduled_script: "{{ lle_certificate_user_home }}/letsencrypt.sh"
+lle_lexicon_path: "/usr/local/bin/lexicon"
 lle_dehydrated_hook_path: "{{lle_dehydrated_repo}}/dehydrated.default.sh"
 lle_deploy_cert_commands:
   - 'echo "Certificate renewed" | mail -s "Lets Encrypt certificate for $DOMAIN successfully generated on `hostname`" {{ lle_script_response_receiver}}'
 lle_invalid_challenge_commands:
   - 'echo "Response was: $RESPONSE" | mail -s "Lets Encrypt certificate renewal failed." {{ lle_script_response_receiver }}'
 lle_unchanged_cert_commands: []
-lle_cert_readonly_group: "mumble-server"
-lle_domains:
-  - name: mumble.example.com
-    group: mumble-server
-  - name: www.example.com
-    group: www-data
+# Contains commands executed as root when certificate has been changed. Typically used to reload a service, such as nginx.
+lle_sudo_reload_commands: ""
+# Typically set from consuming playbooks. Defines what domains this role should request certificates for.Property 'group' defines what group should have read access to generated certificate per domain.
+lle_domains: [{name: "sub.example.com", group: "{{ lle_certificate_user }}"}]
