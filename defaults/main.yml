@@ -5,8 +5,7 @@ lle_provider_token: "API_KEY_GOES_HERE"
 lle_contact_email: "CONTACT_MAIL_GOES_HERE"
 lle_script_response_receiver: root
 lle_certificate_user: "certfarmer"
-# Default password "certfarmer" generated using `mkpasswd --sha512`
-lle_certificate_user_password: "$6$QIzh0mAZ3XK$PrKqDG8RGOwQmPrmW2m0GyBWQlkDnxoX0.HY1EGazVWgaQ6XdaX9QkROcMN..T1reW8EZX/dtmv7EO1FsLtmg0"
+lle_certificate_user_password: "!"
 lle_certificate_user_home: "/var/lib/{{ lle_certificate_user }}"
 lle_use_staging_ca: false
 lle_dehydrated_repo: "{{ lle_certificate_user_home }}/dehydrated"
