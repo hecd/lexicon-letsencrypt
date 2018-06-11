@@ -1,9 +1,7 @@
 # {{ ansible_managed }}
 # Explicitly allow commands certificate generation user can use to notify services of new cert.
-
 {% if lle_sudo_reload_commands|length > 0 %}
-Cmnd_Alias     RELOAD =  {{ lle_sudo_reload_commands }}
-{{ lle_certificate_user }} ALL=(ALL) NOPASSWD: RELOAD
+{{ lle_certificate_user }} ALL=(ALL) NOPASSWD: {{ lle_sudo_reload_commands }}
 {% endif %}
 # Allow certificate user to pass ownership to certificates for read-only access to other groups.
 {% for entry in lle_domains%}
