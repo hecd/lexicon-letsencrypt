@@ -36,7 +36,6 @@
     group: "{{ lle_certificate_user }}"
     force: true
   become: true
-  become_user: "{{ lle_certificate_user }}"
 
 - name: Install dns-lexicon pip package globally
   pip:
@@ -53,7 +52,6 @@
     owner: "{{ lle_certificate_user }}"
     group: "{{ lle_certificate_user }}"
   become: true
-  become_user: "{{ lle_certificate_user }}"
 
 - name: Copy dehydrated config file
   template:
@@ -63,7 +61,6 @@
     owner: "{{ lle_certificate_user }}"
     group: "{{ lle_certificate_user }}"
   become: true
-  become_user: "{{ lle_certificate_user }}"
 
 - name: Register and accept Lets Encrypt CA terms and conditions
   command: "{{ lle_dehydrated_repo}}/dehydrated --register --accept-terms"
@@ -75,16 +72,18 @@
     path: "{{ lle_dehydrated_repo}}/certs"
     state: directory
     mode: 0750
+    owner: "{{ lle_certificate_user }}"
+    group: "{{ lle_certificate_user }}"
   become: true
-  become_user: "{{ lle_certificate_user }}"
 
 - name: Copy certificate generation script (cron script)
   template:
     src: templates/letsencrypt.sh.j2
     dest: "{{ lle_scheduled_script }}"
     mode: 0700
+    owner: "{{ lle_certificate_user }}"
+    group: "{{ lle_certificate_user }}"
   become: true
-  become_user: "{{ lle_certificate_user }}"
 
 - name: Schedule certificate generation
   cron:
