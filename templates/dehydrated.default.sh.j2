@@ -38,6 +38,10 @@ function deploy_cert {
 {% for command in lle_deploy_cert_commands %}
   {{command}}
 {% endfor %}
+
+{% if lle_sudo_reload_commands|length > 0 %}
+  sudo {{ lle_sudo_reload_commands }}
+{% endif %}
 }
 
 function unchanged_cert {
